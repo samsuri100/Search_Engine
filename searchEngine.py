@@ -2,21 +2,21 @@
 import os
 import sys
 import argparse
+from preprocessing import multParCheckValue
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog = 'searchEngine.py', \
-                                     description = "A local, on disk search engine for your text documents! Either use this \
+                                     description = "A local, on-disk search engine for your text documents! Either use this \
                                                     program's custom boolean query language, based on a boolean retrival matrix \
                                                     implemented though a posting list, or write free-form text queries to find \
-                                                    your data! Also, determine how specific you want your search to be: sentence, \
-                                                    paragraph, multi-paragraph!")
-
+                                                    your data! Also, determine how specific you want your search algorithm and the \
+                                                    results to be: sentence, paragraph, or multi-paragraph!")
     parser.add_argument('-f', '--folder', \
                         nargs = 1, \
                         type=str, \
                         required = True, \
                         help = 'Folder where text documents, to be searched through, are stored')
-    parser.add_argument('-q', '--query', \
+    parser.add_argument('-q', '--querytype', \
                         nargs = 1, \
                         type = str, \
                         required = True, \
@@ -24,13 +24,19 @@ if __name__ == '__main__':
                         help = "The type of query search to be performed, either 'Boolean' based on \
                                 a boolean retrival matrix and posting lists, or 'Free-Form' based on \
                                 cosine similarities")
+    parser.add_argument('-r', '--results', \
+                        nargs = 1, \
+                        type = str, \
+                        required = True, \
+                        choices = ['sentence', 'paragraph', 'multi-paragraph'], \
+                        help = 'Determines how specific returned search results are, either: sentence, paragraph, or \
+                                multi-paragraph, where the paragraph length is user defined') 
     parser.add_argument('-s', '--specificity', \
                         nargs = 1, \
                         type = str, \
-                        required = False, \
+                        required = True, \
                         choices = ['sentence', 'paragraph', 'multi-paragraph'], \
-                        default = 'paragraph', \
-                        help = 'Determines the specificity of the search, either: sentence, paragraph, or \
+                        help = 'Determines how specific search algorithms are, either: sentence, paragraph, or \
                                 multi-paragraph, where the paragraph length is user defined')
     args = parser.parse_args()
 
@@ -45,19 +51,28 @@ if __name__ == '__main__':
         if not ((len(extensionCheck) != 1) and (extensionCheck[1] == 'txt')):
             sys.exit("Files in 'searchDocuments' folder must be text files with .txt extentions, program terminating")
 
-    multParLength = ''
     if args.specificity[0] == 'multi-paragraph':
-        multParLength = input('Please enter multi-paragraph length: ')
-        while (multParLength.isdigit() == False):
-            multParLength = input('Please enter a valid integer: ')
-    multParLength = int(multParLength)
+        specificityMultParLength = multParCheckValue('specificity')
+    if args.results[0] == 'multi-paragraph':
+        resultMultParLength = multParCheckValue('results')
+
+    specificityDir = {'sentence': 0, 'paragraph': 1, 'multi-paragraph': specificityMultParLength}
+    resultDir = {'sentence': 0, 'paragraph': 1, 'multi-paragraph': resultMultParLength}
+
+    if resultDir[args.results[0]] < specificityDir[args.specificity[0]]:
+        sys.exit('Search results specificity cannot be broader than search algorithm specificity, program terminating')
+
+    groupedFileObjects = []
+    for fileName in os.listdir(searchDocPath):
+        fileObj = Preprocessing(resultDir[args.results[0]])
+        fileObj.readFile(fileName)
+        fileObj.tokenizeText()
+        fileObj.normalizeTokens()
+        
+        groupedFileObjects.append(fileObj)
 
     if args.query[0] == 'Boolean':
-        postingList = booleanSearch.buildPostingList()
-
-        for fileName in os.listdir(searchDocPath):
-            processedText = preprocessing.preprocessFile(fileName)
-            postingList.addToPostingList(processedText)
+        postingList = booleanSearch.buildPostingList(groupedFileTokens)
 
         quitBool = 0
         while quitBool != 1:
