@@ -2,8 +2,9 @@
 import string 
 
 class Node(value):
-    def __init__(self, value, dataCount = None):
+    def __init__(self, value, dataCount = None, fileName = None):
         self.data = value
+        self.dataFileName = fileName
         self.next = None
         self.dataCount = dataCount 
 
@@ -16,8 +17,8 @@ class PostingsList():
         self.indivNodeLengths = []
         self.nodes = []
 
-    def addTokenToList(self, tokenString):
-        nodeHead = Node(tokenString) 
+    def addTokenToList(self, tokenTouple):
+        nodeHead = Node(tokenTouple[0], None, tokenTouple[1]) 
         nodeTail = nodeHead 
 
         tokenString = tokenString.translate(None, string.punctuation)
@@ -39,3 +40,9 @@ class PostingsList():
         self.nodes.append(nodeHead)
         self.numNodes += 1
         self.indivNodeLengths.append(nodeCount)
+
+    def buildPostingList(self, fileTokenTouples):
+        for touple in fileTokenTouples:
+            self.addTokenToList(touple)
+
+    def searchPostingList()

@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 from preprocessing import multParCheckValue
+from postingsList import PostingsList
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog = 'searchEngine.py', \
@@ -62,18 +63,31 @@ if __name__ == '__main__':
     if resultDir[args.results[0]] < specificityDir[args.specificity[0]]:
         sys.exit('Search results specificity cannot be broader than search algorithm specificity, program terminating')
 
-    groupedFileObjects = []
+    fileTokenTouples = []
     for fileName in os.listdir(searchDocPath):
-        fileObj = Preprocessing(resultDir[args.results[0]])
-        fileObj.readFile(fileName)
+        fileObj = Preprocessing(resultDir[args.results[0]], fileName)
+        fileObj.readFile()
         fileObj.tokenizeText()
-        fileObj.normalizeTokens()
         
-        groupedFileObjects.append(fileObj)
+        fileTokenTouples.append((fileObj.tokenizedList, fileObj.fileName))
 
     if args.query[0] == 'Boolean':
-        postingList = booleanSearch.buildPostingList(groupedFileTokens)
+        pl = PostingsList()
+        pl = pl.buildPostingsList(fileTokenTouples)
 
-        quitBool = 0
-        while quitBool != 1:
-            quiteBool = postingList.searchPostingList()
+        quiteBool = 0
+        while quiteBool != 1:
+            queryInput = Preprocessing.parseQuery()
+
+            results = pl.searchPostingList(queryInput)
+            PostingsList.printResults(results)
+
+            responseDict = {'Y': 0, 'N': 1}
+            while True:
+                toParse = input('Would you like to run another query? (Y/N)')
+                if toParse in responseDict:
+                    quiteBool = responseDict[toParse]
+                else:
+                    break
+
+    if args.query[0] == 'Free-Form':
