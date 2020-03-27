@@ -119,4 +119,4 @@ class Preprocessing():
                     print('Query is not valid, mismatching parenthesis')
                 else:
                    prefixQS = convertToPrefixFromInfix(toParse)
-                   
+                   return prefixQS 

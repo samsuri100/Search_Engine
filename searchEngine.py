@@ -2,16 +2,17 @@
 import os
 import sys
 import argparse
-from preprocessing import multParCheckValue
 from postingsList import PostingsList
+from preprocessing import multParCheckValue, Preprocessing 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog = 'searchEngine.py', \
                                      description = "A local, on-disk search engine for your text documents! Either use this \
                                                     program's custom boolean query language, based on a boolean retrival matrix \
                                                     implemented though a posting list, or write free-form text queries to find \
-                                                    your data! Also, determine how specific you want your search algorithm and the \
-                                                    results to be: sentence, paragraph, or multi-paragraph!")
+                                                    your data! Also, for free-form search queries, determine the specificity of 
+                                                    your search algorithm, and determine how specific you want your search results \
+                                                    to be: sentence, paragraph, or multi-paragraph!")
     parser.add_argument('-f', '--folder', \
                         nargs = 1, \
                         type=str, \
@@ -35,10 +36,11 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--specificity', \
                         nargs = 1, \
                         type = str, \
-                        required = True, \
+                        required = False, \
+                        default = 'sentence', \
                         choices = ['sentence', 'paragraph', 'multi-paragraph'], \
-                        help = 'Determines how specific search algorithms are, either: sentence, paragraph, or \
-                                multi-paragraph, where the paragraph length is user defined')
+                        help = "Determines how specific free-form search algorithm is, either: sentence, paragraph, or \
+                                multi-paragraph, where the paragraph length is user defined; 'sentence' by default")
     args = parser.parse_args()
 
     try:
@@ -52,6 +54,7 @@ if __name__ == '__main__':
         if not ((len(extensionCheck) != 1) and (extensionCheck[1] == 'txt')):
             sys.exit("Files in 'searchDocuments' folder must be text files with .txt extentions, program terminating")
 
+    specificityMultParLength, resultMultParLength = 2, 2
     if args.specificity[0] == 'multi-paragraph':
         specificityMultParLength = multParCheckValue('specificity')
     if args.results[0] == 'multi-paragraph':
@@ -71,23 +74,40 @@ if __name__ == '__main__':
         
         fileTokenTouples.append((fileObj.tokenizedList, fileObj.fileName))
 
-    if args.query[0] == 'Boolean':
-        pl = PostingsList()
-        pl = pl.buildPostingsList(fileTokenTouples)
+    quiteBool = 0
+    queryType = args.query[0]
+    alreadyBuiltBoolean = 0
+    alreadyBuiltFreeForm = 0
 
-        quiteBool = 0
-        while quiteBool != 1:
-            queryInput = Preprocessing.parseQuery()
+    while quiteBool != 1:
+        if queryType == 'Boolean':
+            if alreadyBuiltBoolean == 0:
+                pl = PostingsList()
+                pl.buildPostingsList(fileTokenTouples)
+                alreadyBuiltBoolean = 1
 
-            results = pl.searchPostingList(queryInput)
+            parsedQuery = Preprocessing.parseQuery()
+
+            results = pl.searchPostingList(parsedQuery)
             PostingsList.printResults(results)
 
-            responseDict = {'Y': 0, 'N': 1}
-            while True:
-                toParse = input('Would you like to run another query? (Y/N)')
-                if toParse in responseDict:
-                    quiteBool = responseDict[toParse]
-                else:
-                    break
+        elif queryType == 'Free-Form':
+            if alreadyBuiltFreeForm == 0:
+                ff = FreeForm()
+                ff.buildMatrix()
+                alreadyBuiltFreeForm = 1
 
-    if args.query[0] == 'Free-Form':
+            inputQuery = Preprocessing.inputQuery()
+
+        responseDict = {'Y': 0, 'N': 1}
+        while True:
+            repeatResponse = input('Would you like to run another query? (Y/N)')
+            if repeatResponse in responseDict:
+                quiteBool = responseDict[repeatResponse]
+                break 
+        if repeatResponse == 'Y':
+            correctResponses = ['Boolean', 'Free-Form']
+            while True:
+                queryType = input('Would you like to run a boolean or free-from query? (Boolean/Free-Form)')
+                if queryType in correctResponses:
+                    break
