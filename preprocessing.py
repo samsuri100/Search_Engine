@@ -9,14 +9,14 @@ def multParCheckValue(flag):
         multParLength = input("Please enter multi-paragraph length for '-results': ")
     while (multParLength.isdigit() == False):
         multParLength = input('Please enter a valid integer: ')
-    multParLength = int(multParLength)
+    return int(multParLength)
 
 class Preprocessing():
-    def __init__(self, specificity, fileName):
-        specificity = specificity 
-        fileName = fileName 
-        fileContents = None
-        tokenizedList = None
+    def __init__(self, specificity = None, fileName = None):
+        self.specificity = specificity 
+        self.fileName = fileName 
+        self.fileContents = None
+        self.tokenizedList = []
 
     def readFile(self):
         with open(self.fileName, 'r') as openFile:
@@ -27,23 +27,33 @@ class Preprocessing():
             self.tokenizedList = sent_tokenize(self.fileContents)
 
         elif self.specificity == 1:
-            self.tokenizedList = self.fileContents.split('\n\n')
+            splitList = self.fileContents.split('\n')
+            for term in splitList:
+                if (term != ' ') and (term != ''):
+                    self.tokenizedList.append(term.strip())
 
         else:
-            paragraphList = self.fileContents.split('\n\n')
+            paragraphList = self.fileContents.splitlines(keepends=True)
 
             tempParStr = ''
-            for count, pargraph in enumerate(paragraphList):
-                tempParStr += pargraph + '\n\n'
-                if (counter+1) % self.specificity == 0:
-                    self.tokenizedList.append(tempParStr[:-4])
+            paragraphCount = 0
+            for text in paragraphList:
+                if (text[-1] == '\n') & (text[0] != '\n'):
+                    paragraphCount += 1
+                tempParStr += text 
+                if paragraphCount == self.specificity:
+                    self.tokenizedList.append(tempParStr.strip())
                     tempParStr = ''
+                    paragraphCount = 0
+            if tempParStr != '':
+                if tempParStr.strip() != '':
+                    self.tokenizedList.append(tempParStr.strip())
 
     def normalizeTokens(self):
         for count, token in enumerate(self.tokenizedList):
             self.tokenizedList[count] = token.lower()
 
-    def checkQueryParenthesis(queryString):
+    def checkQueryParenthesis(self, queryString):
         begParenCount = 0
         endParenCount = 0
 
@@ -58,9 +68,9 @@ class Preprocessing():
         else:
             return False 
 
-    def convertToPrefixFromInfix(queryString):
-        priorityMap = {'AND': 1, 'OR': 1, 'NOT': 1, '(': 0, ')':0}
-        operators = ['AND', 'OR', 'NOT', '(', ')']
+    def convertToPrefixFromInfix(self, queryString):
+        priorityMap = {'and': 1, 'or': 1, 'not': 2, '(': 0, ')':0}
+        operators = ['and', 'or', 'not', '(', ')']
         prefix = []
         stack = []
 
@@ -83,40 +93,48 @@ class Preprocessing():
                     stack.append(term)
                 else:
                     while True:
+                        if len(stack) == 0:
+                            stack.append(term)
+                            break 
                         if priorityMap[term] >= priorityMap[stack[-1]]:
                             stack.append(term)
                             break
                         else:
-                            prefix += stack.pop()
+                            prefix.append(stack.pop())
         while len(stack) > 0:
-            prefix += stack.pop()
+            prefix.append(stack.pop())
 
         return list(reversed(prefix))
 
     def parseQuery(self):
         while True:
-            toParse = input("Please enter you boolean logic query, input 'example' \n\
-                             to see previous examples or 'help' for syntax clarification: ")
+
+            print("Please enter your boolean logic query\n"
+                  "input 'example' to see previous examples\n"
+                  "input 'help' for syntax clarification:")
+
+            toParse = input().lower()
 
             if toParse == 'example':
-                print("Example 1: NOT(cat AND dog) OR bird")
-                print("Example 2: google AND NOT(apple) AND 95050")
+                print("\n------------------------------------------\n"
+                      "Example 1: NOT(cat AND dog) OR bird\n"
+                      "Example 2: google AND NOT(apple) AND 95050\n"
+                      "------------------------------------------\n")
 
-            if toParse == 'help':
-                print('''
-                        Allowed operators: NOT, AND, OR \n \
-                        Operators may be capitalized or lowercase \n \
-                        
-                        Parenthesis and nested parenthesis are allowed
-                        Words are numbers are allowed 
-                        
-                        Words, even proper nouns, with a space must be joined with an operator
-                        Example: San AND Francisco
-                     '''
+            elif toParse == 'help':
+                print("\n----------------------------------------------------------------------\n"
+                      "Allowed operators: NOT, AND, OR \n"
+                      "Operators may be capitalized or lowercase\n\n"
+                      "Parenthesis and nested parenthesis are allowed\n"
+                      "Words are numbers are allowed\n\n"
+                      "Words, even proper nouns, with a space must be joined with an operator\n"
+                      "Example: San AND Francisco\n"
+                      "----------------------------------------------------------------------\n")
+
             else:
-                result = checkQueryParenthesis(toParse)
+                result = self.checkQueryParenthesis(toParse)
                 if result == False:
-                    print('Query is not valid, mismatching parenthesis')
+                    print('\nQUERY IS NOT VALID, mismatching parenthesis\n')
                 else:
-                   prefixQS = convertToPrefixFromInfix(toParse)
+                   prefixQS = self.convertToPrefixFromInfix(toParse)
                    return prefixQS 

@@ -10,7 +10,7 @@ if __name__ == '__main__':
                                      description = "A local, on-disk search engine for your text documents! Either use this \
                                                     program's custom boolean query language, based on a boolean retrival matrix \
                                                     implemented though a posting list, or write free-form text queries to find \
-                                                    your data! Also, for free-form search queries, determine the specificity of 
+                                                    your data! Also, for free-form search queries, determine the specificity of \
                                                     your search algorithm, and determine how specific you want your search results \
                                                     to be: sentence, paragraph, or multi-paragraph!")
     parser.add_argument('-f', '--folder', \
@@ -63,7 +63,13 @@ if __name__ == '__main__':
     specificityDir = {'sentence': 0, 'paragraph': 1, 'multi-paragraph': specificityMultParLength}
     resultDir = {'sentence': 0, 'paragraph': 1, 'multi-paragraph': resultMultParLength}
 
-    if resultDir[args.results[0]] < specificityDir[args.specificity[0]]:
+    specificity = None
+    if type(args.specificity) == str:
+        specificity = args.specificity
+    else:
+        specificity = args.specificity[0]
+
+    if resultDir[args.results[0]] < specificityDir[specificity]:
         sys.exit('Search results specificity cannot be broader than search algorithm specificity, program terminating')
 
     fileTokenTouples = []
@@ -75,7 +81,7 @@ if __name__ == '__main__':
         fileTokenTouples.append((fileObj.tokenizedList, fileObj.fileName))
 
     quiteBool = 0
-    queryType = args.query[0]
+    queryType = args.querytype[0]
     alreadyBuiltBoolean = 0
     alreadyBuiltFreeForm = 0
 
@@ -85,12 +91,16 @@ if __name__ == '__main__':
                 pl = PostingsList()
                 pl.buildPostingsList(fileTokenTouples)
                 alreadyBuiltBoolean = 1
-
-            parsedQuery = Preprocessing.parseQuery()
+      
+            pq = Preprocessing()
+            parsedQuery = pq.parseQuery()
 
             results = pl.searchPostingList(parsedQuery)
-            PostingsList.printResults(results)
-
+            if results[0] == 0:
+                print('INVALID QUERY LOGIC, query terminating')
+            else:
+                pl.printResults(results[1])
+        '''
         elif queryType == 'Free-Form':
             if alreadyBuiltFreeForm == 0:
                 ff = FreeForm()
@@ -98,16 +108,16 @@ if __name__ == '__main__':
                 alreadyBuiltFreeForm = 1
 
             inputQuery = Preprocessing.inputQuery()
-
+        '''
         responseDict = {'Y': 0, 'N': 1}
         while True:
-            repeatResponse = input('Would you like to run another query? (Y/N)')
+            repeatResponse = input('Would you like to run another query? (Y/N) ')
             if repeatResponse in responseDict:
                 quiteBool = responseDict[repeatResponse]
                 break 
         if repeatResponse == 'Y':
             correctResponses = ['Boolean', 'Free-Form']
             while True:
-                queryType = input('Would you like to run a boolean or free-from query? (Boolean/Free-Form)')
+                queryType = input('Would you like to run a boolean or free-from query? (Boolean/Free-Form) ')
                 if queryType in correctResponses:
-                    break
+                    break 
