@@ -108,7 +108,6 @@ class Preprocessing():
 
     def parseQuery(self):
         while True:
-
             print("Please enter your boolean logic query\n"
                   "input 'example' to see previous examples\n"
                   "input 'help' for syntax clarification:")
@@ -138,3 +137,27 @@ class Preprocessing():
                 else:
                    prefixQS = self.convertToPrefixFromInfix(toParse)
                    return prefixQS 
+
+    def inputQuery(self):
+        while True:
+            print("Please enter your free-form search query\n"
+                  "input 'example' to see previous examples\n"
+                  "input 'help' for syntax clarification:")
+            
+            inputResponse = input().lower()
+            
+            if inputResponse == 'example':
+                print("\n------------------------------------------\n"
+                      "Example 1: What is the capital of California?\n"
+                      "Example 2: Did the economy grow in 2020\n"
+                      "------------------------------------------\n")
+            
+            elif inputResponse == 'help':
+                print("\n----------------------------------------------------------------------\n"
+                      "Any free-form text is allowed\n"
+                      "Text may be uppercase or lowercase\n\n"
+                      "Numbers, punctuation, and symbols are allowed\n"
+                      "You cannot search exclusively by symbol or punctuation\n\n"
+                      "----------------------------------------------------------------------\n")
+            else:
+                return inputResponse 

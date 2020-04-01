@@ -72,13 +72,24 @@ if __name__ == '__main__':
     if resultDir[args.results[0]] < specificityDir[specificity]:
         sys.exit('Search results specificity cannot be broader than search algorithm specificity, program terminating')
 
-    fileTokenTouples = []
+    fileTokenTouplesResults = []
     for fileName in os.listdir(searchDocPath):
         fileObj = Preprocessing(resultDir[args.results[0]], fileName)
         fileObj.readFile()
         fileObj.tokenizeText()
         
-        fileTokenTouples.append((fileObj.tokenizedList, fileObj.fileName))
+        fileTokenTouplesResults.append((fileObj.tokenizedList, fileObj.fileName))
+
+    fileTokenTouplesSpecificity = []
+    if resultDir[args.results[0]] == specificityDir[args.specificity]:
+        fileTokenTouplesSpecificity = fileTokenTouplesResults
+    else: 
+        for fileName in os.listdir(searchDocPath):
+            fileObj = Preprocessing(specificityDir[args.specificity], fileName)
+            fileObj.readFile()
+            fileObj.tokenizeText()
+        
+            fileTokenTouplesSpecificity.append((fileObj.tokenizedList, fileObj.fileName))
 
     quiteBool = 0
     queryType = args.querytype[0]
@@ -89,7 +100,7 @@ if __name__ == '__main__':
         if queryType == 'Boolean':
             if alreadyBuiltBoolean == 0:
                 pl = PostingsList()
-                pl.buildPostingsList(fileTokenTouples)
+                pl.buildPostingsList(fileTokenTouplesResults)
                 alreadyBuiltBoolean = 1
       
             pq = Preprocessing()
@@ -100,15 +111,19 @@ if __name__ == '__main__':
                 print('INVALID QUERY LOGIC, query terminating')
             else:
                 pl.printResults(results[1])
-        '''
+        
         elif queryType == 'Free-Form':
             if alreadyBuiltFreeForm == 0:
                 ff = FreeForm()
-                ff.buildMatrix()
+                ff.buildMatrix(fileTokenTouplesSpecificity)
                 alreadyBuiltFreeForm = 1
 
-            inputQuery = Preprocessing.inputQuery()
-        '''
+            iq = Preprocessing()
+            inputQuery = iq.inputQuery()
+
+            results = ff.searchMatrix(inputQuery)
+            ff.printResults(results, fileTokenTouplesResults)
+       
         responseDict = {'Y': 0, 'N': 1}
         while True:
             repeatResponse = input('Would you like to run another query? (Y/N) ')
@@ -120,4 +135,5 @@ if __name__ == '__main__':
             while True:
                 queryType = input('Would you like to run a boolean or free-from query? (Boolean/Free-Form) ')
                 if queryType in correctResponses:
+                    print('')
                     break 
