@@ -171,6 +171,7 @@ class PostingsList():
         
     def printResults(self, resultList):
         print('\n-----------------------------------------------')
+
         if len(resultList) > 1:
             print('FOUND '+str(len(resultList))+' TOTAL RESULTS\n')
         elif len(resultList) == 1:

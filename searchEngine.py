@@ -2,6 +2,7 @@
 import os
 import sys
 import argparse
+from freeform import FreeForm 
 from postingsList import PostingsList
 from preprocessing import multParCheckValue, Preprocessing 
 
@@ -69,6 +70,7 @@ if __name__ == '__main__':
     else:
         specificity = args.specificity[0]
 
+    equalBool = 0
     if resultDir[args.results[0]] < specificityDir[specificity]:
         sys.exit('Search results specificity cannot be broader than search algorithm specificity, program terminating')
 
@@ -80,12 +82,14 @@ if __name__ == '__main__':
         
         fileTokenTouplesResults.append((fileObj.tokenizedList, fileObj.fileName))
 
+    equalBool = 0
     fileTokenTouplesSpecificity = []
-    if resultDir[args.results[0]] == specificityDir[args.specificity]:
+    if resultDir[args.results[0]] == specificityDir[specificity]:
         fileTokenTouplesSpecificity = fileTokenTouplesResults
+        equalBool = 1
     else: 
         for fileName in os.listdir(searchDocPath):
-            fileObj = Preprocessing(specificityDir[args.specificity], fileName)
+            fileObj = Preprocessing(specificityDir[specificity], fileName)
             fileObj.readFile()
             fileObj.tokenizeText()
         
@@ -95,6 +99,7 @@ if __name__ == '__main__':
     queryType = args.querytype[0]
     alreadyBuiltBoolean = 0
     alreadyBuiltFreeForm = 0
+    limit = None 
 
     while quiteBool != 1:
         if queryType == 'Boolean':
@@ -119,10 +124,10 @@ if __name__ == '__main__':
                 alreadyBuiltFreeForm = 1
 
             iq = Preprocessing()
-            inputQuery = iq.inputQuery()
+            inputQuery, limit = iq.inputQuery(limit)
 
             results = ff.searchMatrix(inputQuery)
-            ff.printResults(results, fileTokenTouplesResults)
+            ff.printResults(results, fileTokenTouplesResults, equalBool, limit)
        
         responseDict = {'Y': 0, 'N': 1}
         while True:

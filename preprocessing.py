@@ -9,6 +9,8 @@ def multParCheckValue(flag):
         multParLength = input("Please enter multi-paragraph length for '-results': ")
     while (multParLength.isdigit() == False):
         multParLength = input('Please enter a valid integer: ')
+    
+    print('')
     return int(multParLength)
 
 class Preprocessing():
@@ -138,11 +140,15 @@ class Preprocessing():
                    prefixQS = self.convertToPrefixFromInfix(toParse)
                    return prefixQS 
 
-    def inputQuery(self):
+    def inputQuery(self, pastLimit):
+        limit = pastLimit
+
         while True:
             print("Please enter your free-form search query\n"
                   "input 'example' to see previous examples\n"
-                  "input 'help' for syntax clarification:")
+                  "input 'help' for syntax clarification\n"
+                  "input 'limit=<integer>' to limit number of responses\n"
+                  "input 'limit=all' to show all responses:")
             
             inputResponse = input().lower()
             
@@ -155,9 +161,18 @@ class Preprocessing():
             elif inputResponse == 'help':
                 print("\n----------------------------------------------------------------------\n"
                       "Any free-form text is allowed\n"
-                      "Text may be uppercase or lowercase\n\n"
+                      "Text may be uppercase or lowercase\n"
                       "Numbers, punctuation, and symbols are allowed\n"
-                      "You cannot search exclusively by symbol or punctuation\n\n"
+                      "You cannot search exclusively by symbol or punctuation\n"
                       "----------------------------------------------------------------------\n")
-            else:
-                return inputResponse 
+            else: 
+                limitCheck = inputResponse.split('=')
+                if (len(limitCheck) > 1) & (limitCheck[0] == 'limit'):
+                    if limitCheck[1] == 'all':
+                        limit = None 
+                    elif limitCheck[1].isdigit() == True:
+                        limit = int(limitCheck[1])
+                    print('')
+
+                else:
+                    return inputResponse, limit 

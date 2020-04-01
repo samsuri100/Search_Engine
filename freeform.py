@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import string
 from nltk.tokenize import word_tokenize
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -9,13 +10,15 @@ class FreeForm():
         self.mappedFileList = []
         self.documentList = []
         self.vocabulary = []
+        self.documentIndex = 0
 
     def buildMatrix(self, fileTouples, rebuildFlag = False, newDoc = None):
         if rebuildFlag == False:
             for touple in fileTouples:
                 for text in touple[0]:
-                    self.mappedFileList.append(tuple[1])
+                    self.mappedFileList.append(touple[1])
                     self.documentList.append(text)
+                    self.documentIndex += 1
         else:
             self.documentList.append(newDoc)
 
@@ -24,8 +27,7 @@ class FreeForm():
         self.vocabulary = tfidfVect.get_feature_names()
 
         if rebuildFlag == True:
-            self.tfidfMatrix = self.tfidfMatrix[:-1, :]
-            self.documentList.pop()
+            self.tfidfMatrix = self.tfidfMatrix[:self.documentIndex, :]
 
     def searchMatrix(self, freeQueryText):
         tokenizedQuery = word_tokenize(freeQueryText)
@@ -48,7 +50,7 @@ class FreeForm():
             self.buildMatrix(None, True, freeQueryText)
 
         queryVect = TfidfVectorizer(vocabulary = self.vocabulary)
-        queryMatrix = queryVect.fit_transform(freeQueryText)
+        queryMatrix = queryVect.fit_transform([freeQueryText])
 
         cosSim = cosine_similarity(queryMatrix, self.tfidfMatrix)[0]
         index = cosSim.argsort()
@@ -60,22 +62,32 @@ class FreeForm():
 
         return useIndex 
 
-    def printResults(self, indexList):
-        mostSimilarFirstIndex = list(reversed(useIndex))
+    def printResults(self, indexList, fileTouplesResults, equalBool, resultLimit):
+        useIndex = list(reversed(indexList))[:resultLimit]
+
+        fileResultChunks = []
+        if equalBool == 0:
+            for touple in fileTouplesResults:
+                for text in touple[0]:
+                    fileResultChunks.append(text)
 
         print('\n-----------------------------------------------')
-        if len(indexList) > 1:
-            print('FOUND '+str(len(indexList))+' TOTAL RESULTS\n')
-        elif len(indexList) == 1:
-            print('FOUND '+str(len(indexList))+' TOTAL RESULT\n')
+
+        if len(useIndex) > 1:
+            print('FOUND '+str(len(useIndex))+' TOTAL RESULTS\n')
+        elif len(useIndex) == 1:
+            print('FOUND '+str(len(useIndex))+' TOTAL RESULT\n')
         else:
-            print('FOUND '+str(len(indexList))+' TOTAL RESULTS') 
+            print('FOUND '+str(len(useIndex))+' TOTAL RESULTS') 
 
-        if len(indexList) != 0:
-            for index in useIndex:
-                print(
+        if len(useIndex) != 0:
+            for count, index in enumerate(useIndex):
+                print('RESULT '+str(count+1)+':\n'+self.documentList[index])
+                if equalBool == 0:
+                    for text in fileResultChunks:
+                        if self.documentList[index] in text:
+                            print('FOUND IN:\n'+text)
+                            break 
+                print('IN FILE:\n'+self.mappedFileList[index]+'\n')
+
         print('-----------------------------------------------\n')
-
-
-
-
