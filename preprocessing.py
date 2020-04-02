@@ -1,12 +1,15 @@
 #!/usr/bin/python3
-import re 
 from nltk.tokenize import sent_tokenize
 
+#Function gets user input for multi-paragraph length for either '-specificity' or '-result' flags
 def multParCheckValue(flag):
+    #'multi-paragraph' was entered for '-specificity' flag
     if flag == 'specificity':
         multParLength = input("Please enter multi-paragraph length for '-specificity': ")
+    #'multi-paragraph' was entered for '-result' flag
     else:
         multParLength = input("Please enter multi-paragraph length for '-results': ")
+    #Ensuring input is a valid integer
     while (multParLength.isdigit() == False):
         multParLength = input('Please enter a valid integer: ')
     
@@ -20,51 +23,72 @@ class Preprocessing():
         self.fileContents = None
         self.tokenizedList = []
 
+    #Function reads contents of .txt files
     def readFile(self):
         with open(self.fileName, 'r') as openFile:
             self.fileContents = openFile.read()
 
+    #Function tokenizes text either by sentence, paragraph, or user defined multi-paragraph length
     def tokenizeText(self):
+        #Using nltk's sent_tokenize to tokenize by sentence
+        #Automatically handles white space and newline characters
         if self.specificity == 0:
             self.tokenizedList = sent_tokenize(self.fileContents)
 
+        #Tokenizing by paragraph
         elif self.specificity == 1:
+            #Spliting based on newline characters
             splitList = self.fileContents.split('\n')
             for term in splitList:
+                #If multiple newline characters between paragraphs, extra ones are discarded
                 if (term != ' ') and (term != ''):
+                    #Stripping paragraphs incase there is a space after last period
                     self.tokenizedList.append(term.strip())
 
+        #Tokenizing by multi-paragraph
         else:
+            #Splitlines will group newline character immediately after text with the text
+            #Immediately sequential newline characters after this are tokenized separately
+            #ie: 'Hello\n\n\n'.splitlines(keepends=True) -> ['Hello\n', '\n', '\n']
             paragraphList = self.fileContents.splitlines(keepends=True)
 
             tempParStr = ''
             paragraphCount = 0
             for text in paragraphList:
+                #If on text, which ends with a newline character, this is a paragraph
                 if (text[-1] == '\n') & (text[0] != '\n'):
                     paragraphCount += 1
+                #Immediately sequential newline characters are added to string, does not affect paragraph count
                 tempParStr += text 
+                #If number of paragraphs in tempParStr is equal to user defined multi-paragraph length, add to token list
                 if paragraphCount == self.specificity:
                     self.tokenizedList.append(tempParStr.strip())
                     tempParStr = ''
-                    paragraphCount = 0
+                    paragraphCount = 0 #Resetting counter
+            #If finished iterating, but last multi-paragraph chunk is below user defined number, add it to token list
             if tempParStr != '':
+                #If just extra newline characters, do nothing
                 if tempParStr.strip() != '':
                     self.tokenizedList.append(tempParStr.strip())
 
+    #Function normalizes tokens by making them all lowercase
     def normalizeTokens(self):
         for count, token in enumerate(self.tokenizedList):
             self.tokenizedList[count] = token.lower()
 
+    #Function checks parenthesis and makes sure # of '(' match # of ')'
     def checkQueryParenthesis(self, queryString):
         begParenCount = 0
         endParenCount = 0
 
         for character in queryString:
+            #Adds to '(' count
             if character == '(':
                 begParenCount += 1
+            #Adds to ')' count
             elif character == ')':
                 endParenCount += 1
-
+        
         if begParenCount == endParenCount:
             return True 
         else:
@@ -107,7 +131,7 @@ class Preprocessing():
             prefix.append(stack.pop())
 
         return list(reversed(prefix))
-
+    
     def parseQuery(self):
         while True:
             print("Please enter your boolean logic query\n"
