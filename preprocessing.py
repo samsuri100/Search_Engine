@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import re
 from nltk.tokenize import sent_tokenize
 
 #Function gets user input for multi-paragraph length for either '-specificity' or '-result' flags
@@ -93,27 +94,37 @@ class Preprocessing():
             return True 
         else:
             return False 
-
+    
+    #Function converts boolean algebra query in infix notation to prefix notation
+    #ie: '(not(cat) and not(dog)) or bird' -> ['or', 'and', 'not', 'cat', 'not', 'dog', 'bird']
     def convertToPrefixFromInfix(self, queryString):
+        #Priority list, 'not' has a higher priority than 'or' & 'and'
         priorityMap = {'and': 1, 'or': 1, 'not': 2, '(': 0, ')':0}
         operators = ['and', 'or', 'not', '(', ')']
         prefix = []
         stack = []
 
+        #Spliting by both spaces and '('  and ')'
+        #Removing empty strings and spaces from list
         splitQuery = list(filter(lambda x: (x != ' ') & (x != ''), re.split('(\W)', queryString)))
         reversedQuery = list(reversed(splitQuery))
 
+        #Infix to Prefix algorithm
         for term in reversedQuery:
+            #Operand
             if term not in operators:
                 prefix.append(term)
+            # ')'
             elif term == ')':
                 stack.append(term)
+            # '('
             elif term == '(':
                 x = stack[-1]
                 while x != ')':
                     prefix.append(stack.pop()) 
                     x = stack[-1]
                 stack.pop()
+            #Operator
             else:
                 if len(stack) == 0:
                     stack.append(term)
@@ -121,23 +132,30 @@ class Preprocessing():
                     while True:
                         if len(stack) == 0:
                             stack.append(term)
-                            break 
+                            break
+                        #Current operator has >= priority than last operator on stack
                         if priorityMap[term] >= priorityMap[stack[-1]]:
                             stack.append(term)
                             break
+                        #Current operator has < priority than last operator on stack
                         else:
                             prefix.append(stack.pop())
+        #Add any left over operator symbols from stack to prefix list
         while len(stack) > 0:
             prefix.append(stack.pop())
 
         return list(reversed(prefix))
     
+    #Function gets boolean logic query from user for boolean search
     def parseQuery(self):
         while True:
+            #User can be shown examples, get help, or enter query
             print("Please enter your boolean logic query\n"
                   "input 'example' to see previous examples\n"
                   "input 'help' for syntax clarification:")
 
+            #So case of operators does not matter
+            #All search is based on lowercase inputs
             toParse = input().lower()
 
             if toParse == 'example':
@@ -156,24 +174,30 @@ class Preprocessing():
                       "Example: San AND Francisco\n"
                       "----------------------------------------------------------------------\n")
 
+            #User has inputed query
             else:
+                #Checking parenthesis to make sure same # of '(' as ')'
                 result = self.checkQueryParenthesis(toParse)
                 if result == False:
                     print('\nQUERY IS NOT VALID, mismatching parenthesis\n')
                 else:
-                   prefixQS = self.convertToPrefixFromInfix(toParse)
-                   return prefixQS 
+                    #Converting query from infix string to prefix list
+                    prefixQS = self.convertToPrefixFromInfix(toParse)
+                    return prefixQS 
 
+    #Function gets free-form query from user for free-form search
     def inputQuery(self, pastLimit):
         limit = pastLimit
 
         while True:
+            #User can be shown examples, get help, enter query, or modify result limit
             print("Please enter your free-form search query\n"
                   "input 'example' to see previous examples\n"
                   "input 'help' for syntax clarification\n"
                   "input 'limit=<integer>' to limit number of responses\n"
                   "input 'limit=all' to show all responses:")
             
+            #All search is based on lowercase inputs
             inputResponse = input().lower()
             
             if inputResponse == 'example':
@@ -189,14 +213,19 @@ class Preprocessing():
                       "Numbers, punctuation, and symbols are allowed\n"
                       "You cannot search exclusively by symbol or punctuation\n"
                       "----------------------------------------------------------------------\n")
+            #Query or result limit is being modified
             else: 
                 limitCheck = inputResponse.split('=')
+                #Seeing if result limit is being modified or not, if so, it must be 'all' or a digit
                 if (len(limitCheck) > 1) & (limitCheck[0] == 'limit'):
+                    #If 'all' is present, no limit is set
                     if limitCheck[1] == 'all':
                         limit = None 
+                    #Must be a valid digit, if not, user input is ignored
                     elif limitCheck[1].isdigit() == True:
                         limit = int(limitCheck[1])
                     print('')
 
+                #Query was entered
                 else:
                     return inputResponse, limit 
