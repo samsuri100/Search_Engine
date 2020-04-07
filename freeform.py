@@ -126,6 +126,10 @@ class FreeForm():
                             print('FOUND IN:\n'+text)
                             break 
                 #Printing the file the text is in
-                print('IN FILE:\n'+self.mappedFileList[index]+'\n')
+                if count+1 != len(useIndex):
+                    print('IN FILE:\n'+self.mappedFileList[index]+'\n')
+                #Last element lacks newline character for appearance
+                else:
+                    print('IN FILE:\n'+self.mappedFileList[index])
 
         print('-----------------------------------------------\n')
