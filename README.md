@@ -138,3 +138,9 @@ IN FILE:
 ucBerkeley.txt
 -----------------------------------------------
 ```
+## Planned Future Updates:
+- There should be a way to write your results to a file if you want that
+- Can searching through the postings lists be more efficient?
+- Can we rank the results from the boolean retrieval matrix?
+- Can you search by topic?  
+    - Incorporating document topic segmentation using ML algorithms
